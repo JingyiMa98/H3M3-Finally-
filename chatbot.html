@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <div class="container-fluid vh-100 p-2">
+        <div class="chat-container vh-100">
+            <!-- Chatbox for messages -->
+            <div id="chat-box" class="chat-box">
+                <!-- No response content will be inside chat box initially -->
+                <div id="no-response" class="no-response text-center">
+                    <img src="{{ url_for('static', filename='images/robot.png') }}" alt="Robot Image" class="robot-image mb-1" />
+                    <h1 class="text-center mb-4 color-black">Nexus</h1>
+
+                    <div class="row justify-content-center" style="margin-top: 120px;">
+                        <div class="col-md-3">
+                            <i class="fa fa-coffee img-fluid"></i>
+                            <h5>Local Restaurants & Services</h5>
+                            <p>Explore restaurants, coffee shops, and services in your area.</p>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="fa fa-map img-fluid"></i>
+                            <h5>Interactive Map</h5>
+                            <p>Offers an interactive map, smart route planning, real-time traffic updates, and efficient travel.</p>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="fa fa-camera img-fluid"></i>
+                            <h5>General Explorations</h5>
+                            <p>Easily explore hotels, attractions, and services with one-click booking.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-container d-flex mb-3">
+                <input type="text" id="user-message" class="form-control chat-input" placeholder="Type your message..."
+                    style="border-radius: 10px; flex-grow: 1;">
+                <button id="send-btn" class="btn btn-primary ms-2" style="border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center;">
+                    <i class="fa fa-paper-plane" style="color: white;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('send-btn').addEventListener('click', async () => {
+    const message = document.getElementById('user-message').value;
+    const chatBox = document.getElementById('chat-box');
+    const noResponse = document.getElementById('no-response');
+
+    // Hide the no-response section as soon as the user sends a message
+    noResponse.style.display = 'none';
+
+    // Show the user message immediately
+    chatBox.innerHTML += `
+        <div class="message-container user-message mb-2">
+            <p>You: ${message}</p>
+        </div>
+    `;
+
+    // Show the bot typing indicator
+    chatBox.innerHTML += `
+        <div class="message-container bot-message typing-indicator mb-3">
+            <p style="color:white;"><strong>Bot:</strong> typing...</p>
+        </div>
+    `;
+    // Scroll to the bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Delay the bot's response by 2 seconds to simulate typing
+    const response = await fetch('/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+    });
+    const data = await response.json();
+
+    // Remove the typing indicator after 1.5 seconds
+    setTimeout(() => {
+        const typingIndicator = document.querySelector('.typing-indicator');
+        typingIndicator && typingIndicator.remove();
+    }, 1500);
+
+    // Show the bot's response
+    setTimeout(() => {
+        if (data.restaurants) {
+            chatBox.innerHTML += `
+                <div class="message-container bot-message mb-3">
+                    <p><strong>Bot:</strong> ${data.reply}</p>
+                </div>
+            `;
+            data.restaurants.forEach(r => {
+            chatBox.innerHTML += `
+                <div class="restaurant-card-container mb-3">
+                    <div class="card restaurant-card">
+                        <div class="row g-0">
+                            <div class="col-4">
+                                <img src="${r.image_url}" class="card-img" alt="${r.name}">
+                            </div>
+                            <div class="col-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">${r.name}</h5>
+                                    <p class="card-text">Rating: ${r.rating} ⭐</p>
+                                    <p class="card-text">${r.address}</p>
+                                    <a href="${r.url}" target="_blank" class="btn btn-visit">Visit</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        } else {
+            // If no restaurants, show the "no-response" section again
+            noResponse.style.display = 'block';
+        }
+        chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
+    }, 2000); // Bot reply delay
+
+    // Reset input field
+    document.getElementById('user-message').value = '';
+});
+
+    </script>
+</body>
+
+</html>
