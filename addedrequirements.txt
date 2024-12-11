@@ -1,0 +1,11 @@
+flask
+python-dotenv
+ipykernel
+torch
+pillow
+transformers
+openai
+langchain-openai
+langchain_community
+langchain_chroma
+pandas
